@@ -1,3 +1,5 @@
+import io
+import sqlite3
 import discord
 from db import DB
 from enum import Enum
@@ -92,6 +94,7 @@ class Points(commands.Cog):
 
         if interaction.user == user:
             await interaction.followup.send("You can't give reputation to yourself!")
+            return
 
         add_entry_to_points_db(user.id, interaction.user.id, experience, reason)
 
@@ -127,6 +130,113 @@ class Points(commands.Cog):
                 ephemeral=True,
             )
             raise error
+
+    @app_commands.command(
+        name="check_reputation", description="Check a user's reputation"
+    )
+    @app_commands.describe(user="The user who's reputation you want to check")
+    async def check_reputation(
+        self, interaction: discord.Interaction, user: discord.Member
+    ):
+        await interaction.response.defer()
+
+        # Fetch data from DB
+        conn = sqlite3.connect("points.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT point_value, reason, author_user_id FROM reputation WHERE target_user_id = ?",
+            (user.id,),
+        )
+        rows = cursor.fetchall()
+        conn.close()
+
+        total_points = sum(row[0] for row in rows)
+
+        embed = discord.Embed(
+            title=f"{user.display_name}'s Reputation",
+            description=f"**Total Reputation:** {total_points}",
+            color=discord.Color.blurple(),
+        )
+
+        class HistoryPaginator(discord.ui.View):
+            def __init__(self, entries, member, total_points, per_page=10):
+                super().__init__(timeout=60)
+                self.entries = entries
+                self.member = member
+                self.per_page = per_page
+                self.total_points = total_points
+                self.current_page = 0
+                self.max_page = (len(entries) - 1) // per_page
+
+                self.prev_button.disabled = self.max_page <= 0
+                self.next_button.disabled = self.max_page <= 0
+
+            def get_page_embed(self):
+                start = self.current_page * self.per_page
+                end = start + self.per_page
+                page_entries = self.entries[start:end]
+
+                description_lines = [
+                    f"**Total Reputation:** {self.total_points}\n"
+                ]  # Total at the top
+                for points, reason, author_id in page_entries:
+                    description_lines.append(
+                        f"{points:+d} | By <@{author_id}> | Reason: {reason}"
+                    )
+
+                page_embed = discord.Embed(
+                    title=f"{self.member.display_name}'s Reputation History",
+                    description="\n".join(description_lines),
+                    color=discord.Color.blurple(),
+                )
+                page_embed.set_footer(
+                    text=f"Page {self.current_page + 1}/{self.max_page + 1}"
+                )
+                return page_embed
+
+            @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
+            async def prev_button(
+                self, interaction: discord.Interaction, button: discord.ui.Button
+            ):
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    await interaction.response.edit_message(
+                        embed=self.get_page_embed(), view=self
+                    )
+
+            @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
+            async def next_button(
+                self, interaction: discord.Interaction, button: discord.ui.Button
+            ):
+                if self.current_page < self.max_page:
+                    self.current_page += 1
+                    await interaction.response.edit_message(
+                        embed=self.get_page_embed(), view=self
+                    )
+
+        if rows:
+            view = HistoryPaginator(rows, user, total_points)
+
+            # Add a button to show the first page
+            class ShowHistoryButton(discord.ui.View):
+                def __init__(self, paginator):
+                    super().__init__(timeout=60)
+                    self.paginator = paginator
+
+                @discord.ui.button(
+                    label="Show History", style=discord.ButtonStyle.primary
+                )
+                async def show_history(
+                    self, interaction: discord.Interaction, button: discord.ui.Button
+                ):
+                    await interaction.response.edit_message(
+                        embed=self.paginator.get_page_embed(), view=self.paginator
+                    )
+
+            await interaction.followup.send(embed=embed, view=ShowHistoryButton(view))
+        else:
+            embed.description += "\nNo reputation history yet."  # type: ignore
+            await interaction.followup.send(embed=embed)
 
 
 async def setup(client: commands.Bot):
