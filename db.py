@@ -28,9 +28,14 @@ class DB:
 
         return self.cursor
 
-    def exec_sql(self, sql: str):
+    def exec_sql(self, sql: str, params: tuple | None = None):
         # Note: this executes raw SQL which may be unsafe
         connection = self.get_connection()
         cursor = self.get_cursor()
-        cursor.execute(sql)
+
+        if params is None:
+            cursor.execute(sql)
+        else:
+            cursor.execute(sql, params)
+
         connection.commit()

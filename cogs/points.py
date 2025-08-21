@@ -27,6 +27,27 @@ def setup_points_db():
     db.exec_sql(sql)
 
 
+def add_entry_to_points_db(
+    target_user_id: int,
+    author_user_id: int,
+    experience_type: ExperienceType,
+    reason: str,
+):
+    # Determine point value
+    if experience_type == ExperienceType.positive:
+        point_value = 1
+    else:
+        point_value = -1
+
+    sql = """
+        INSERT INTO reputation (target_user_id, author_user_id, point_value, reason)
+        VALUES (?, ?, ?, ?)
+    """
+
+    db = DB("points.db")
+    db.exec_sql(sql, (target_user_id, author_user_id, point_value, reason))
+
+
 class Points(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
@@ -68,9 +89,27 @@ class Points(commands.Cog):
         reason: str,
     ):
         await interaction.response.defer()
-        await interaction.followup.send("Placeholder text")
-        # good_or_bad should be a choice between two options, a positive option and a negative option
-        ...
+
+        if interaction.user == user:
+            await interaction.followup.send("You can't give reputation to yourself!")
+
+        add_entry_to_points_db(user.id, interaction.user.id, experience, reason)
+
+        if experience == ExperienceType.positive:
+            color = discord.Color.green()
+            emoji = "👍"
+        else:
+            color = discord.Color.red()
+            emoji = "👎"
+
+        response_embed = discord.Embed(
+            title="Reputation Updated!",
+            description=f"{interaction.user.mention} gave {emoji} reputation to {user.mention}",
+            color=color,
+        )
+        response_embed.add_field(name="Reason", value=reason, inline=False)
+
+        await interaction.followup.send(embed=response_embed)
 
     @reputation.error
     async def reputation_error(
