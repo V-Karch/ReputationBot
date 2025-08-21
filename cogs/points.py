@@ -1,4 +1,3 @@
-import io
 import sqlite3
 import discord
 from db import DB
