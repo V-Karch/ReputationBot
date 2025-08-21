@@ -10,9 +10,10 @@ with open("token.txt", "r") as f:
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(command_prefix="~", intents = intents)
+client = commands.Bot(command_prefix="~", intents=intents)
 
-@client.command(name = "sync")
+
+@client.command(name="sync")
 async def _sync(context: commands.Context):
     if context.author.id == OWNER_ID:
         await client.tree.sync()
