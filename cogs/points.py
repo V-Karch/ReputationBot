@@ -1,9 +1,15 @@
 import discord
 from db import DB
+from enum import Enum
 from discord.ext import commands
 from discord import app_commands
 
 OWNER_ID = 923600698967461898
+
+
+class ExperienceType(Enum):
+    positive = "positive"
+    negative = "negative"
 
 
 def setup_points_db():
@@ -42,6 +48,46 @@ class Points(commands.Cog):
         setup_points_db()
 
         await interaction.followup.send("Attempted initial table setup")
+
+    @app_commands.command(
+        name="reputation", description="Add or subtract reputation from a person"
+    )
+    @app_commands.describe(
+        user="The user you want to modify the reputation for",
+        experience="The type of experience you had (positive or negative)",
+        reason="The reason you are giving this person reputation",
+    )
+    @app_commands.checks.cooldown(
+        1, 300, key=lambda interaction: (interaction.guild_id, interaction.user.id)
+    )
+    async def reputation(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+        experience: ExperienceType,
+        reason: str,
+    ):
+        await interaction.response.defer()
+        await interaction.followup.send("Placeholder text")
+        # good_or_bad should be a choice between two options, a positive option and a negative option
+        ...
+
+    @reputation.error
+    async def reputation_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        if isinstance(error, app_commands.CommandOnCooldown):
+            await interaction.response.send_message(
+                f"⏳ You’re on cooldown! Try again in {error.retry_after:.1f} seconds.",
+                ephemeral=True,
+            )
+        else:
+            # fallback for unexpected errors
+            await interaction.response.send_message(
+                "⚠️ An unexpected error occurred while running this command.",
+                ephemeral=True,
+            )
+            raise error
 
 
 async def setup(client: commands.Bot):
