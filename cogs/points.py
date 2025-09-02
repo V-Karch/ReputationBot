@@ -1,52 +1,9 @@
-import sqlite3
 import discord
-from db import DB
-from enum import Enum
 from discord.ext import commands
 from discord import app_commands
+from db import DB, ExperienceType
 
 OWNER_ID = 923600698967461898
-
-
-class ExperienceType(Enum):
-    positive = "positive"
-    negative = "negative"
-
-
-def setup_points_db():
-    sql = """
-        CREATE TABLE IF NOT EXISTS reputation (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            target_user_id INTEGER,
-            author_user_id INTEGER,
-            point_value INTEGER, -- inferred
-            reason TEXT
-        )
-    """
-
-    db = DB("points.db")
-    db.exec_sql(sql)
-
-
-def add_entry_to_points_db(
-    target_user_id: int,
-    author_user_id: int,
-    experience_type: ExperienceType,
-    reason: str,
-):
-    # Determine point value
-    if experience_type == ExperienceType.positive:
-        point_value = 1
-    else:
-        point_value = -1
-
-    sql = """
-        INSERT INTO reputation (target_user_id, author_user_id, point_value, reason)
-        VALUES (?, ?, ?, ?)
-    """
-
-    db = DB("points.db")
-    db.exec_sql(sql, (target_user_id, author_user_id, point_value, reason))
 
 
 class Points(commands.Cog):
@@ -67,8 +24,7 @@ class Points(commands.Cog):
             await interaction.followup.send("This command is not for you.")
             return
 
-        setup_points_db()
-
+        DB.setup_points_db()
         await interaction.followup.send("Attempted initial table setup")
 
     @app_commands.command(
@@ -95,14 +51,14 @@ class Points(commands.Cog):
             await interaction.followup.send("You can't give reputation to yourself!")
             return
 
-        add_entry_to_points_db(user.id, interaction.user.id, experience, reason)
+        DB.add_entry_to_points_db(user.id, interaction.user.id, experience, reason)
 
-        if experience == ExperienceType.positive:
-            color = discord.Color.green()
-            emoji = "👍"
-        else:
-            color = discord.Color.red()
-            emoji = "👎"
+        color = (
+            discord.Color.green()
+            if experience == ExperienceType.positive
+            else discord.Color.red()
+        )
+        emoji = "👍" if experience == ExperienceType.positive else "👎"
 
         response_embed = discord.Embed(
             title="Reputation Updated!",
@@ -110,7 +66,6 @@ class Points(commands.Cog):
             color=color,
         )
         response_embed.add_field(name="Reason", value=reason, inline=False)
-
         await interaction.followup.send(embed=response_embed)
 
     @reputation.error
@@ -123,7 +78,6 @@ class Points(commands.Cog):
                 ephemeral=True,
             )
         else:
-            # fallback for unexpected errors
             await interaction.response.send_message(
                 "⚠️ An unexpected error occurred while running this command.",
                 ephemeral=True,
@@ -139,16 +93,14 @@ class Points(commands.Cog):
     ):
         await interaction.response.defer()
 
-        # Fetch data from DB
-        conn = sqlite3.connect("points.db")
-        cursor = conn.cursor()
+        # Use a single DB instance
+        db = DB("points.db")
+        cursor = db.get_cursor()
         cursor.execute(
             "SELECT point_value, reason, author_user_id FROM reputation WHERE target_user_id = ?",
             (user.id,),
         )
         rows = cursor.fetchall()
-        conn.close()
-
         total_points = sum(row[0] for row in rows)
 
         embed = discord.Embed(
@@ -157,9 +109,16 @@ class Points(commands.Cog):
             color=discord.Color.blurple(),
         )
 
+        if not rows:
+            embed.description += "\nNo reputation history yet."
+            await interaction.followup.send(embed=embed)
+            return
+
+        # Pagination for reputation history
         class HistoryPaginator(discord.ui.View):
-            def __init__(self, entries, member, total_points, per_page=10):
+            def __init__(self, db_instance, entries, member, total_points, per_page=10):
                 super().__init__(timeout=60)
+                self.db = db_instance  # store the DB instance
                 self.entries = entries
                 self.member = member
                 self.per_page = per_page
@@ -175,9 +134,7 @@ class Points(commands.Cog):
                 end = start + self.per_page
                 page_entries = self.entries[start:end]
 
-                description_lines = [
-                    f"**Total Reputation:** {self.total_points}\n"
-                ]  # Total at the top
+                description_lines = [f"**Total Reputation:** {self.total_points}\n"]
                 for points, reason, author_id in page_entries:
                     description_lines.append(
                         f"{points:+d} | By <@{author_id}> | Reason: {reason}"
@@ -213,29 +170,23 @@ class Points(commands.Cog):
                         embed=self.get_page_embed(), view=self
                     )
 
-        if rows:
-            view = HistoryPaginator(rows, user, total_points)
+        view = HistoryPaginator(db, rows, user, total_points)
 
-            # Add a button to show the first page
-            class ShowHistoryButton(discord.ui.View):
-                def __init__(self, paginator):
-                    super().__init__(timeout=60)
-                    self.paginator = paginator
+        # Single "Show History" button
+        class ShowHistoryButton(discord.ui.View):
+            def __init__(self, paginator):
+                super().__init__(timeout=60)
+                self.paginator = paginator
 
-                @discord.ui.button(
-                    label="Show History", style=discord.ButtonStyle.primary
+            @discord.ui.button(label="Show History", style=discord.ButtonStyle.primary)
+            async def show_history(
+                self, interaction: discord.Interaction, button: discord.ui.Button
+            ):
+                await interaction.response.edit_message(
+                    embed=self.paginator.get_page_embed(), view=self.paginator
                 )
-                async def show_history(
-                    self, interaction: discord.Interaction, button: discord.ui.Button
-                ):
-                    await interaction.response.edit_message(
-                        embed=self.paginator.get_page_embed(), view=self.paginator
-                    )
 
-            await interaction.followup.send(embed=embed, view=ShowHistoryButton(view))
-        else:
-            embed.description += "\nNo reputation history yet."  # type: ignore
-            await interaction.followup.send(embed=embed)
+        await interaction.followup.send(embed=embed, view=ShowHistoryButton(view))
 
 
 async def setup(client: commands.Bot):

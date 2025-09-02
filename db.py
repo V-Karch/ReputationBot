@@ -1,4 +1,10 @@
 import sqlite3
+from enum import Enum
+
+
+class ExperienceType(Enum):
+    positive = "positive"
+    negative = "negative"
 
 
 class DB:
@@ -39,3 +45,39 @@ class DB:
             cursor.execute(sql, params)
 
         connection.commit()
+
+    @staticmethod
+    def add_entry_to_points_db(
+        target_user_id: int,
+        author_user_id: int,
+        experience_type: ExperienceType,
+        reason: str,
+    ):
+        # Determine point value
+        if experience_type == ExperienceType.positive:
+            point_value = 1
+        else:
+            point_value = -1
+
+        sql = """
+            INSERT INTO reputation (target_user_id, author_user_id, point_value, reason)
+            VALUES (?, ?, ?, ?)
+        """
+
+        db = DB("points.db")
+        db.exec_sql(sql, (target_user_id, author_user_id, point_value, reason))
+
+    @staticmethod
+    def setup_points_db():
+        sql = """
+            CREATE TABLE IF NOT EXISTS reputation (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target_user_id INTEGER,
+                author_user_id INTEGER,
+                point_value INTEGER, -- inferred
+                reason TEXT
+            )
+        """
+
+        db = DB("points.db")
+        db.exec_sql(sql)
