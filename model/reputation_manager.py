@@ -20,7 +20,7 @@ class ReputationManager(discord.ui.View):
         cursor = self.db.get_cursor()
         cursor.execute(
             "SELECT id, point_value, reason, author_user_id FROM reputation "
-            "WHERE target_user_id = ? ORDER BY id",
+            "WHERE target_user_id = ? ORDER BY id DESC",
             (self.member.id,),
         )
         self.entries = cursor.fetchall()
@@ -32,7 +32,7 @@ class ReputationManager(discord.ui.View):
         cursor = self.db.get_cursor()
         cursor.execute(
             "SELECT id, point_value, reason, author_user_id FROM reputation "
-            "WHERE target_user_id = ? ORDER BY id",
+            "WHERE target_user_id = ? ORDER BY id DESC",
             (self.member.id,),
         )
         self.entries = cursor.fetchall()

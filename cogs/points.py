@@ -98,7 +98,7 @@ class Points(commands.Cog):
         db = DB("points.db")
         cursor = db.get_cursor()
         cursor.execute(
-            "SELECT point_value, reason, author_user_id FROM reputation WHERE target_user_id = ?",
+            "SELECT point_value, reason, author_user_id FROM reputation WHERE target_user_id = ? ORDER BY id DESC",
             (user.id,),
         )
         rows = cursor.fetchall()
