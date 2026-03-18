@@ -98,7 +98,7 @@ pip install discord.py
 ### 1. Clone the Repository
 
 ```
-git clone <repo-url>
+git clone https://github.com/V-Karch/ReputationBot
 cd ReputationBot
 ```
 
