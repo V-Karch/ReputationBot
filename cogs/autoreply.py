@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 
 OWNER_ID = 923600698967461898
 
@@ -44,6 +43,37 @@ class Autoreply(commands.Cog):
             color=0x237FEB,
             description="Please give it some time before requesting again depending on the length of your demand.\n\n*Refrain from crossposting again. Thank you for understanding.*",
         )
+
+        await context.reply(content=user.mention if user else "", embed=embed)
+
+    @commands.command(
+        name="tradechannels",
+        description="Tells users where the trade channels are",
+        aliases=["tc"],
+    )
+    async def tradechannels(
+        self, context: commands.Context, user: discord.Member = None
+    ):
+        embed = discord.Embed(
+            title="❗️ This is not a trade channel",
+            color=0x237FEB,
+            description="Click below and please repost your request in one of the following locations:\n",
+        )
+
+        embed.description += "\nTrade Hub 1: <#1341162683734425631>\n"
+        embed.description += "Trade Hub 2: <#1341162764701536398>\n"
+        embed.description += "Shiny Trade: <#1047110840735768636>\n\n"
+        embed.description += (
+            "Alternatively, For different games, we have the following:"
+        )
+        embed.description += "\n\nLegends ZA: <#1428946618392252416>\n"
+        embed.description += "Legends Arceus: <#1070473675289133116>\n"
+        embed.description += "Brilliant Diamond/Shining Pearl: <#1070473596302012507>\n"
+        embed.description += "Sword and Shield: <#1070427983367651348>\n"
+        embed.description += "Pokemon Let's Go: <#1070473752695021598>"
+
+        # Consolidation
+        print(embed.description)
 
         await context.reply(content=user.mention if user else "", embed=embed)
 
