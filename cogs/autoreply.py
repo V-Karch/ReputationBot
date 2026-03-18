@@ -54,26 +54,25 @@ class Autoreply(commands.Cog):
     async def tradechannels(
         self, context: commands.Context, user: discord.Member = None
     ):
+        info_text = """Click below and please repost your request in one of the following locations:
+
+Trade Hub 1: <#1341162683734425631>
+Trade Hub 2: <#1341162764701536398>
+Shiny Trade: <#1047110840735768636>
+
+Alternatively, For different games, we have the following:
+
+Legends ZA: <#1428946618392252416>
+Legends Arceus: <#1070473675289133116>
+Brilliant Diamond/Shining Pearl: <#1070473596302012507>
+Sword and Shield: <#1070427983367651348>
+Pokemon Let's Go: <#1070473752695021598>"""
+
         embed = discord.Embed(
             title="❗️ This is not a trade channel",
             color=0x237FEB,
-            description="Click below and please repost your request in one of the following locations:\n",
+            description=info_text,
         )
-
-        embed.description += "\nTrade Hub 1: <#1341162683734425631>\n"
-        embed.description += "Trade Hub 2: <#1341162764701536398>\n"
-        embed.description += "Shiny Trade: <#1047110840735768636>\n\n"
-        embed.description += (
-            "Alternatively, For different games, we have the following:"
-        )
-        embed.description += "\n\nLegends ZA: <#1428946618392252416>\n"
-        embed.description += "Legends Arceus: <#1070473675289133116>\n"
-        embed.description += "Brilliant Diamond/Shining Pearl: <#1070473596302012507>\n"
-        embed.description += "Sword and Shield: <#1070427983367651348>\n"
-        embed.description += "Pokemon Let's Go: <#1070473752695021598>"
-
-        # Consolidation
-        print(embed.description)
 
         await context.reply(content=user.mention if user else "", embed=embed)
 
