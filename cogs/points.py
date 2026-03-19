@@ -103,10 +103,12 @@ class Points(commands.Cog):
         )
         rows = cursor.fetchall()
         total_points = sum(row[0] for row in rows)
+        unique_users = len(set(row[2] for row in rows))
 
         embed = discord.Embed(
             title=f"{user.display_name}'s Reputation",
-            description=f"**Total Reputation:** {total_points}",
+            description=f"**Total Reputation:** {total_points}\n" +
+            f"**Unique Traders**: {unique_users}",
             color=discord.Color.blurple(),
         )
 
@@ -115,7 +117,7 @@ class Points(commands.Cog):
             await interaction.followup.send(embed=embed)
             return
 
-        view = HistoryPaginator(db, rows, user, total_points)
+        view = HistoryPaginator(db, rows, user, total_points, unique_users)
         await interaction.followup.send(embed=embed, view=ShowHistoryButton(view))
 
     @app_commands.command(

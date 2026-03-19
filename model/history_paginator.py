@@ -2,13 +2,14 @@ import discord
 
 
 class HistoryPaginator(discord.ui.View):
-    def __init__(self, db_instance, entries, member, total_points, per_page=10):
+    def __init__(self, db_instance, entries, member, total_points, unique_users, per_page=10):
         super().__init__(timeout=60)
         self.db = db_instance  # store the DB instance
         self.entries = entries
         self.member = member
         self.per_page = per_page
         self.total_points = total_points
+        self.unique_users = unique_users
         self.current_page = 0
         self.max_page = (len(entries) - 1) // per_page
 
@@ -20,7 +21,7 @@ class HistoryPaginator(discord.ui.View):
         end = start + self.per_page
         page_entries = self.entries[start:end]
 
-        description_lines = [f"**Total Reputation:** {self.total_points}\n"]
+        description_lines = [f"**Total Reputation:** {self.total_points}\n**Unique Traders**: {self.unique_users}\n"]
         for points, reason, author_id in page_entries:
             description_lines.append(
                 f"{points:+d} | By <@{author_id}> | Reason: {reason}"

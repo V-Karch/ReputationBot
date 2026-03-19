@@ -26,6 +26,7 @@ class ReputationManager(discord.ui.View):
         self.entries = cursor.fetchall()
         self.max_page = max((len(self.entries) - 1) // self.per_page, 0)
         self.current_page = min(self.current_page, self.max_page)
+        self.unique_users = len(set(entry[3] for entry in self.entries))
 
     async def refresh_entries(self):
         """Async-friendly refresh."""
@@ -38,6 +39,7 @@ class ReputationManager(discord.ui.View):
         self.entries = cursor.fetchall()
         self.max_page = max((len(self.entries) - 1) // self.per_page, 0)
         self.current_page = min(self.current_page, self.max_page)
+        self.unique_users = len(set(entry[3] for entry in self.entries))
         self.update_buttons()
 
     def update_buttons(self):
