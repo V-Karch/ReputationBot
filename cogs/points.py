@@ -107,8 +107,8 @@ class Points(commands.Cog):
 
         embed = discord.Embed(
             title=f"{user.display_name}'s Reputation",
-            description=f"**Total Reputation:** {total_points}\n" +
-            f"**Unique Traders**: {unique_users}",
+            description=f"**Total Reputation:** {total_points}\n"
+            + f"**Unique Traders**: {unique_users}",
             color=discord.Color.blurple(),
         )
 
