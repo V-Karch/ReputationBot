@@ -9,6 +9,7 @@ with open("token.txt", "r") as f:
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 client = commands.Bot(command_prefix="!", intents=intents)
 
