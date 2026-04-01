@@ -19,7 +19,7 @@ class LeaderboardPaginator(discord.ui.View):
 
         embed = discord.Embed(
             title="Reputation Leaderboard",
-            color=discord.Color.gold(),
+            color=discord.Color.blurple(),
         )
         description_lines = []
         for idx, (user_id, points) in enumerate(page_entries, start=start + 1):
@@ -28,7 +28,7 @@ class LeaderboardPaginator(discord.ui.View):
         embed.set_footer(text=f"Page {self.current_page + 1}/{self.max_page + 1}")
         return embed
 
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple)
     async def prev_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
@@ -38,7 +38,7 @@ class LeaderboardPaginator(discord.ui.View):
                 embed=self.get_page_embed(), view=self
             )
 
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.blurple)
     async def next_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
