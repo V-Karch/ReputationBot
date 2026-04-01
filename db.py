@@ -83,17 +83,6 @@ class DB:
         db.exec_sql(sql)
 
     @staticmethod
-    def setup_leaderboard_db():
-        sql = """
-            CREATE TABLE IF NOT EXISTS leaderboard_cache (
-                user_id INTEGER PRIMARY KEY,
-                total_points INTEGER
-            )
-        """
-        db = DB("points.db")
-        db.exec_sql(sql)
-
-    @staticmethod
     def get_leaderboard(top_n: int = 10):
         db = DB("points.db")
         cursor = db.get_cursor()

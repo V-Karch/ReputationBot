@@ -175,14 +175,6 @@ class Points(commands.Cog):
             f"You are currently ranked #{rank} on the leaderboard."
         )
 
-    @commands.command(name="init_leaderboard")
-    async def init_leaderboard(self, ctx: commands.Context):
-        if ctx.author.id != OWNER_ID:
-            await ctx.send("This command is not for you.")
-            return
-        DB.setup_leaderboard_db()
-        await ctx.send("Leaderboard table initialized.")
-
 
 async def setup(client: commands.Bot):
     await client.add_cog(Points(client))
