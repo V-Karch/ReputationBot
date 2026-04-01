@@ -23,7 +23,7 @@ class LeaderboardPaginator(discord.ui.View):
         )
         description_lines = []
         for idx, (user_id, points) in enumerate(page_entries, start=start + 1):
-            description_lines.append(f"**{idx}.** <@{user_id}> - {points} pts")
+            description_lines.append(f"**{idx}.** <@{user_id}> - {points} points")
         embed.description = "\n".join(description_lines)
         embed.set_footer(text=f"Page {self.current_page + 1}/{self.max_page + 1}")
         return embed
