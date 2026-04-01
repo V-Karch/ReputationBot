@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from db import DB, ExperienceType
+from model.leaderboard_paginator import LeaderboardPaginator
 from model.history_paginator import HistoryPaginator, ShowHistoryButton
 from model.reputation_manager import ReputationManager
 
@@ -147,20 +148,13 @@ class Points(commands.Cog):
     )
     async def repboard(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        leaderboard = DB.get_leaderboard(10)
-        if not leaderboard:
+        paginator = LeaderboardPaginator(per_page=10)
+        if not paginator.entries:
             await interaction.followup.send("No reputation data yet.")
             return
-
-        embed = discord.Embed(
-            title="Reputation Leaderboard",
-            color=discord.Color.gold(),
+        await interaction.followup.send(
+            embed=paginator.get_page_embed(), view=paginator
         )
-        description_lines = []
-        for rank, (user_id, total_points) in enumerate(leaderboard, start=1):
-            description_lines.append(f"**{rank}.** <@{user_id}> - {total_points} pts")
-        embed.description = "\n".join(description_lines)
-        await interaction.followup.send(embed=embed)
 
     @app_commands.command(
         name="reprank", description="Display your ranking in the reputation leaderboard"
