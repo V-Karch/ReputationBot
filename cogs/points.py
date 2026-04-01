@@ -142,6 +142,47 @@ class Points(commands.Cog):
             view=view,
         )
 
+    @app_commands.command(
+        name="repboard", description="Display top users by reputation points"
+    )
+    async def repboard(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        leaderboard = DB.get_leaderboard(10)
+        if not leaderboard:
+            await interaction.followup.send("No reputation data yet.")
+            return
+
+        embed = discord.Embed(
+            title="Reputation Leaderboard",
+            color=discord.Color.gold(),
+        )
+        description_lines = []
+        for rank, (user_id, total_points) in enumerate(leaderboard, start=1):
+            description_lines.append(f"**{rank}.** <@{user_id}> - {total_points} pts")
+        embed.description = "\n".join(description_lines)
+        await interaction.followup.send(embed=embed)
+
+    @app_commands.command(
+        name="reprank", description="Display your ranking in the reputation leaderboard"
+    )
+    async def reprank(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        rank = DB.get_user_rank(interaction.user.id)
+        if not rank:
+            await interaction.followup.send("You have no reputation points yet.")
+            return
+        await interaction.followup.send(
+            f"You are currently ranked #{rank} on the leaderboard."
+        )
+
+    @commands.command(name="init_leaderboard")
+    async def init_leaderboard(self, ctx: commands.Context):
+        if ctx.author.id != OWNER_ID:
+            await ctx.send("This command is not for you.")
+            return
+        DB.setup_leaderboard_db()
+        await ctx.send("Leaderboard table initialized.")
+
 
 async def setup(client: commands.Bot):
     await client.add_cog(Points(client))

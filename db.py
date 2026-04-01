@@ -81,3 +81,53 @@ class DB:
 
         db = DB("points.db")
         db.exec_sql(sql)
+
+    @staticmethod
+    def setup_leaderboard_db():
+        sql = """
+            CREATE TABLE IF NOT EXISTS leaderboard_cache (
+                user_id INTEGER PRIMARY KEY,
+                total_points INTEGER
+            )
+        """
+        db = DB("points.db")
+        db.exec_sql(sql)
+
+    @staticmethod
+    def get_leaderboard(top_n: int = 10):
+        db = DB("points.db")
+        cursor = db.get_cursor()
+        cursor.execute(
+            """
+            SELECT target_user_id, SUM(point_value) as total_points
+            FROM reputation
+            GROUP BY target_user_id
+            ORDER BY total_points DESC
+            LIMIT ?
+            """,
+            (top_n,),
+        )
+        return cursor.fetchall()
+
+    @staticmethod
+    def get_user_rank(user_id: int):
+        db = DB("points.db")
+        cursor = db.get_cursor()
+        # Compute ranking efficiently in SQL
+        cursor.execute(
+            """
+            SELECT COUNT(*) + 1 FROM (
+                SELECT target_user_id, SUM(point_value) as total_points
+                FROM reputation
+                GROUP BY target_user_id
+                HAVING total_points > (
+                    SELECT SUM(point_value) FROM reputation WHERE target_user_id = ?
+                )
+            )
+            """,
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+        return None
