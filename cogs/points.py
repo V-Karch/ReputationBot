@@ -162,7 +162,7 @@ class Points(commands.Cog):
     async def reprank(self, interaction: discord.Interaction):
         await interaction.response.defer()
         rank = DB.get_user_rank(interaction.user.id)
-        if not rank:
+        if rank == 0:
             await interaction.followup.send("You have no reputation points yet.")
             return
         await interaction.followup.send(

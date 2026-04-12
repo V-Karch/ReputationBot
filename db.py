@@ -102,21 +102,29 @@ class DB:
     def get_user_rank(user_id: int):
         db = DB("points.db")
         cursor = db.get_cursor()
-        # Compute ranking efficiently in SQL
+
+        # Check if user has any points
+        cursor.execute(
+            "SELECT COALESCE(SUM(point_value), 0) FROM reputation WHERE target_user_id = ?",
+            (user_id,),
+        )
+        total = cursor.fetchone()[0]
+
+        if total == 0:
+            return 0  # unranked
+
+        # Compute rank
         cursor.execute(
             """
             SELECT COUNT(*) + 1 FROM (
                 SELECT target_user_id, SUM(point_value) as total_points
                 FROM reputation
                 GROUP BY target_user_id
-                HAVING total_points > (
-                    SELECT SUM(point_value) FROM reputation WHERE target_user_id = ?
-                )
+                HAVING total_points > ?
             )
             """,
-            (user_id,),
+            (total,),
         )
+
         row = cursor.fetchone()
-        if row:
-            return row[0]
-        return None
+        return row[0] if row else 0
