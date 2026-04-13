@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from model.rules import RULES, make_rule_embed
+from model.rules import make_rule_embed
 
 OWNER_ID = 923600698967461898
 
