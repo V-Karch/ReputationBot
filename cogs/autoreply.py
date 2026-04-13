@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from model.rules import RULES, make_rule_embed
 
 OWNER_ID = 923600698967461898
 
@@ -75,6 +76,16 @@ Pokemon Let's Go: <#1070473752695021598>"""
         )
 
         await context.reply(content=user.mention if user else "", embed=embed)
+
+    @commands.command()
+    async def rule(self, context: commands.Context, number: int | None):
+        rule_number: int | None = number
+
+        if number is None:
+            rule_number = 0
+            # Set to zero if no value supplied
+
+        await context.reply(embed=make_rule_embed(rule_number))
 
 
 async def setup(client: commands.Bot):
