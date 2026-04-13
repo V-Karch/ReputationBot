@@ -19,9 +19,9 @@ RULES = [
 def make_rule_embed(rule_number: int) -> discord.Embed:
     message: str = "Invalid Rule Number!"
 
-    if rule_number >= 1 and rule_number <= len(rule_number) + 1:
-        message = RULES[rule_number + 1]
+    if rule_number >= 1 and rule_number <= len(RULES) + 1:
+        message = RULES[rule_number - 1]
 
-    embed = discord.Embed(color=discord.Color.red, description=message)
+    embed = discord.Embed(color=discord.Colour.red(), description=message)
 
     return embed
