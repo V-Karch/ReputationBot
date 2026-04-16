@@ -183,10 +183,18 @@ class Points(commands.Cog):
         name="traderank",
         description="Check your trading rank based on unique traders",
     )
-    async def traderank(self, interaction: discord.Interaction):
+    @app_commands.describe(user="User to check (optional)")
+    async def traderank(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | None = None,
+    ):
         await interaction.response.defer()
 
-        member = interaction.guild.get_member(interaction.user.id)
+        # Determine target
+        member = user or interaction.user
+        member = interaction.guild.get_member(member.id)
+
         unique_users = DB.get_unique_traders_count(member.id)
 
         current_rank = None
@@ -205,46 +213,47 @@ class Points(commands.Cog):
                 "role_id": None,
             }
 
-        # Roles user SHOULD have
-        eligible_roles = {
-            rank["role_id"] for rank in TRADER_RANKS if unique_users >= rank["required"]
-        }
+        # Only sync roles if checking self
+        is_self = member.id == interaction.user.id
 
-        # All tracked trader roles
-        all_rank_roles = {rank["role_id"] for rank in TRADER_RANKS}
+        ranked_up = False
 
-        user_role_ids = {role.id for role in member.roles}
+        if is_self:
+            eligible_roles = {
+                rank["role_id"]
+                for rank in TRADER_RANKS
+                if unique_users >= rank["required"]
+            }
 
-        # Determine role changes
-        roles_to_add_ids = eligible_roles - user_role_ids
-        roles_to_remove_ids = (user_role_ids & all_rank_roles) - eligible_roles
+            all_rank_roles = {rank["role_id"] for rank in TRADER_RANKS}
+            user_role_ids = {role.id for role in member.roles}
 
-        # Detect rank-up (only if gaining current rank role)
-        ranked_up = (
-            current_rank["role_id"] is not None
-            and current_rank["role_id"] not in user_role_ids
-        )
+            roles_to_add_ids = eligible_roles - user_role_ids
+            roles_to_remove_ids = (user_role_ids & all_rank_roles) - eligible_roles
 
-        # Resolve role objects
-        roles_to_add = [
-            interaction.guild.get_role(rid)
-            for rid in roles_to_add_ids
-            if interaction.guild.get_role(rid)
-        ]
-
-        roles_to_remove = [
-            interaction.guild.get_role(rid)
-            for rid in roles_to_remove_ids
-            if interaction.guild.get_role(rid)
-        ]
-
-        # Apply role changes
-        if roles_to_add:
-            await member.add_roles(*roles_to_add, reason="Trader rank sync (add)")
-        if roles_to_remove:
-            await member.remove_roles(
-                *roles_to_remove, reason="Trader rank sync (remove)"
+            ranked_up = (
+                current_rank["role_id"] is not None
+                and current_rank["role_id"] not in user_role_ids
             )
+
+            roles_to_add = [
+                interaction.guild.get_role(rid)
+                for rid in roles_to_add_ids
+                if interaction.guild.get_role(rid)
+            ]
+
+            roles_to_remove = [
+                interaction.guild.get_role(rid)
+                for rid in roles_to_remove_ids
+                if interaction.guild.get_role(rid)
+            ]
+
+            if roles_to_add:
+                await member.add_roles(*roles_to_add, reason="Trader rank sync (add)")
+            if roles_to_remove:
+                await member.remove_roles(
+                    *roles_to_remove, reason="Trader rank sync (remove)"
+                )
 
         # Progress text
         if next_rank:
@@ -261,11 +270,13 @@ class Points(commands.Cog):
             for rank in TRADER_RANKS
         ]
 
+        subject = "Your" if is_self else f"{member.mention}'s"
+
         embed = discord.Embed(
             title="Trading Rank",
             color=discord.Color.blurple(),
             description=(
-                f"**Your Unique Traders:** {unique_users}\n\n"
+                f"**{subject} Unique Traders:** {unique_users}\n\n"
                 f"**Current Rank:** "
                 + (
                     f"<@&{current_rank['role_id']}>"
@@ -283,7 +294,7 @@ class Points(commands.Cog):
         )
 
         content = None
-        if ranked_up and current_rank["role_id"]:
+        if is_self and ranked_up and current_rank["role_id"]:
             content = member.mention
             embed.add_field(
                 name="",
