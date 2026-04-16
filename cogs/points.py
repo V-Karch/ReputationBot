@@ -191,7 +191,6 @@ class Points(commands.Cog):
     ):
         await interaction.response.defer()
 
-        # Determine target
         member = user or interaction.user
         member = interaction.guild.get_member(member.id)
 
@@ -213,47 +212,46 @@ class Points(commands.Cog):
                 "role_id": None,
             }
 
-        # Only sync roles if checking self
-        is_self = member.id == interaction.user.id
+        # Roles user SHOULD have
+        eligible_roles = {
+            rank["role_id"] for rank in TRADER_RANKS if unique_users >= rank["required"]
+        }
 
-        ranked_up = False
+        # All tracked trader roles
+        all_rank_roles = {rank["role_id"] for rank in TRADER_RANKS}
 
-        if is_self:
-            eligible_roles = {
-                rank["role_id"]
-                for rank in TRADER_RANKS
-                if unique_users >= rank["required"]
-            }
+        user_role_ids = {role.id for role in member.roles}
 
-            all_rank_roles = {rank["role_id"] for rank in TRADER_RANKS}
-            user_role_ids = {role.id for role in member.roles}
+        # Determine role changes
+        roles_to_add_ids = eligible_roles - user_role_ids
+        roles_to_remove_ids = (user_role_ids & all_rank_roles) - eligible_roles
 
-            roles_to_add_ids = eligible_roles - user_role_ids
-            roles_to_remove_ids = (user_role_ids & all_rank_roles) - eligible_roles
+        # Detect rank-up (only if gaining current rank role)
+        ranked_up = (
+            current_rank["role_id"] is not None
+            and current_rank["role_id"] not in user_role_ids
+        )
 
-            ranked_up = (
-                current_rank["role_id"] is not None
-                and current_rank["role_id"] not in user_role_ids
+        # Resolve role objects
+        roles_to_add = [
+            interaction.guild.get_role(rid)
+            for rid in roles_to_add_ids
+            if interaction.guild.get_role(rid)
+        ]
+
+        roles_to_remove = [
+            interaction.guild.get_role(rid)
+            for rid in roles_to_remove_ids
+            if interaction.guild.get_role(rid)
+        ]
+
+        # Apply role changes (ALWAYS runs, even when checking others)
+        if roles_to_add:
+            await member.add_roles(*roles_to_add, reason="Trader rank sync (add)")
+        if roles_to_remove:
+            await member.remove_roles(
+                *roles_to_remove, reason="Trader rank sync (remove)"
             )
-
-            roles_to_add = [
-                interaction.guild.get_role(rid)
-                for rid in roles_to_add_ids
-                if interaction.guild.get_role(rid)
-            ]
-
-            roles_to_remove = [
-                interaction.guild.get_role(rid)
-                for rid in roles_to_remove_ids
-                if interaction.guild.get_role(rid)
-            ]
-
-            if roles_to_add:
-                await member.add_roles(*roles_to_add, reason="Trader rank sync (add)")
-            if roles_to_remove:
-                await member.remove_roles(
-                    *roles_to_remove, reason="Trader rank sync (remove)"
-                )
 
         # Progress text
         if next_rank:
@@ -270,6 +268,7 @@ class Points(commands.Cog):
             for rank in TRADER_RANKS
         ]
 
+        is_self = member.id == interaction.user.id
         subject = "Your" if is_self else f"{member.mention}'s"
 
         embed = discord.Embed(
