@@ -139,6 +139,7 @@ class DB:
             SELECT COUNT(DISTINCT author_user_id)
             FROM reputation
             WHERE target_user_id = ?
+            AND point_value > 0
             """,
             (user_id,),
         )

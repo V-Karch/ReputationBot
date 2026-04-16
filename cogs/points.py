@@ -112,7 +112,7 @@ class Points(commands.Cog):
         )
         rows = cursor.fetchall()
         total_points = sum(row[0] for row in rows)
-        unique_users = len(set(row[2] for row in rows))
+        unique_users = len(set(row[2] for row in rows if row[0] > 0))
 
         embed = discord.Embed(
             title=f"{user.display_name}'s Reputation",
