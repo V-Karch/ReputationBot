@@ -8,6 +8,14 @@ from model.reputation_manager import ReputationManager
 
 OWNER_ID = 923600698967461898
 
+TRADER_RANKS = [
+    {"name": "Potential Trader", "required": 5, "role_id": 1484354856352219327},
+    {"name": "Trusted Trader", "required": 15, "role_id": 1058092559773216858},
+    {"name": "Trade Leader", "required": 30, "role_id": 1484356325960978442},
+    {"name": "Elite Trader", "required": 45, "role_id": 1058867257868030012},
+    {"name": "Champion Trader", "required": 100, "role_id": 1484356944822140960},
+]
+
 
 class Points(commands.Cog):
     def __init__(self, client: commands.Bot):
@@ -131,7 +139,9 @@ class Points(commands.Cog):
     ):
         await interaction.response.defer(ephemeral=True)
 
-        if interaction.user.id != OWNER_ID:
+        if (
+            interaction.user.id != OWNER_ID
+        ):  # TODO: Change this to be available for anyone Mod+
             await interaction.followup.send("You are not allowed to use this command.")
             return
 
@@ -168,6 +178,65 @@ class Points(commands.Cog):
         await interaction.followup.send(
             f"You are currently ranked #{rank} on the leaderboard."
         )
+
+    @app_commands.command(
+        name="traderank",
+        description="Check your trading rank based on unique traders",
+    )
+    async def traderank(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        unique_users = DB.get_unique_traders_count(interaction.user.id)
+
+        current_rank = None
+        next_rank = None
+
+        for rank in TRADER_RANKS:
+            if unique_users >= rank["required"]:
+                current_rank = rank
+            elif unique_users < rank["required"] and next_rank is None:
+                next_rank = rank
+
+        if current_rank is None:
+            current_rank = {
+                "name": "Unranked",
+                "required": 0,
+                "role_id": None,
+            }
+
+        if next_rank:
+            remaining = next_rank["required"] - unique_users
+            progress_text = (
+                f"{remaining} more unique traders needed for <@&{next_rank['role_id']}>"
+            )
+        else:
+            progress_text = "Maximum rank achieved"
+
+        tier_lines = []
+        for rank in TRADER_RANKS:
+            tier_lines.append(f"<@&{rank['role_id']}> — {rank['required']} traders")
+
+        embed = discord.Embed(
+            title="Trading Rank",
+            color=discord.Color.blurple(),
+            description=(
+                f"**Your Unique Traders:** {unique_users}\n\n"
+                f"**Current Rank:** "
+                + (
+                    f"<@&{current_rank['role_id']}>"
+                    if current_rank["role_id"]
+                    else "Unranked"
+                )
+                + f"\n\n**Next Rank Progress:** {progress_text}"
+            ),
+        )
+
+        embed.add_field(
+            name="Rank Tiers",
+            value="\n".join(tier_lines),
+            inline=False,
+        )
+
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 async def setup(client: commands.Bot):

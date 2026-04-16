@@ -100,6 +100,7 @@ class DB:
 
     @staticmethod
     def get_user_rank(user_id: int):
+        # This is for the leaderboard.
         db = DB("points.db")
         cursor = db.get_cursor()
 
@@ -128,3 +129,18 @@ class DB:
 
         row = cursor.fetchone()
         return row[0] if row else 0
+
+    @staticmethod
+    def get_unique_traders_count(user_id: int) -> int:
+        db = DB("points.db")
+        cursor = db.get_cursor()
+        cursor.execute(
+            """
+            SELECT COUNT(DISTINCT author_user_id)
+            FROM reputation
+            WHERE target_user_id = ?
+            """,
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row and row[0] is not None else 0
