@@ -184,7 +184,7 @@ class Points(commands.Cog):
         description="Check your trading rank based on unique traders",
     )
     async def traderank(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         unique_users = DB.get_unique_traders_count(interaction.user.id)
 
         current_rank = None
@@ -236,7 +236,7 @@ class Points(commands.Cog):
             inline=False,
         )
 
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(client: commands.Bot):
