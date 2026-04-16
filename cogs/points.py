@@ -185,7 +185,9 @@ class Points(commands.Cog):
     )
     async def traderank(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        unique_users = DB.get_unique_traders_count(interaction.user.id)
+
+        member = interaction.guild.get_member(interaction.user.id)
+        unique_users = DB.get_unique_traders_count(member.id)
 
         current_rank = None
         next_rank = None
@@ -203,6 +205,32 @@ class Points(commands.Cog):
                 "role_id": None,
             }
 
+        # Determine roles the user should have (all ranks up to current)
+        eligible_roles = [
+            rank["role_id"] for rank in TRADER_RANKS if unique_users >= rank["required"]
+        ]
+
+        user_role_ids = {role.id for role in member.roles}
+
+        missing_roles = [rid for rid in eligible_roles if rid not in user_role_ids]
+
+        ranked_up = False
+
+        # Detect rank-up specifically (missing current rank role)
+        if current_rank["role_id"] and current_rank["role_id"] not in user_role_ids:
+            ranked_up = True
+
+        # Add all missing roles silently
+        roles_to_add = [
+            interaction.guild.get_role(rid)
+            for rid in missing_roles
+            if interaction.guild.get_role(rid) is not None
+        ]
+
+        if roles_to_add:
+            await member.add_roles(*roles_to_add, reason="Trader rank sync")
+
+        # Progress text
         if next_rank:
             remaining = next_rank["required"] - unique_users
             progress_text = (
@@ -211,9 +239,11 @@ class Points(commands.Cog):
         else:
             progress_text = "Maximum rank achieved"
 
-        tier_lines = []
-        for rank in TRADER_RANKS:
-            tier_lines.append(f"<@&{rank['role_id']}> — {rank['required']} traders")
+        # Tier list
+        tier_lines = [
+            f"<@&{rank['role_id']}> : {rank['required']} traders"
+            for rank in TRADER_RANKS
+        ]
 
         embed = discord.Embed(
             title="Trading Rank",
@@ -236,7 +266,17 @@ class Points(commands.Cog):
             inline=False,
         )
 
-        await interaction.followup.send(embed=embed)
+        # Add congratulations message only if true rank-up occurred
+        content = None
+        if ranked_up and current_rank["role_id"]:
+            content = member.mention
+            embed.add_field(
+                name="",
+                value=f"Congratulations! You have ranked up to <@&{current_rank['role_id']}>",
+                inline=False,
+            )
+
+        await interaction.followup.send(content=content, embed=embed)
 
 
 async def setup(client: commands.Bot):
