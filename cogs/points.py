@@ -205,30 +205,46 @@ class Points(commands.Cog):
                 "role_id": None,
             }
 
-        # Determine roles the user should have (all ranks up to current)
-        eligible_roles = [
+        # Roles user SHOULD have
+        eligible_roles = {
             rank["role_id"] for rank in TRADER_RANKS if unique_users >= rank["required"]
-        ]
+        }
+
+        # All tracked trader roles
+        all_rank_roles = {rank["role_id"] for rank in TRADER_RANKS}
 
         user_role_ids = {role.id for role in member.roles}
 
-        missing_roles = [rid for rid in eligible_roles if rid not in user_role_ids]
+        # Determine role changes
+        roles_to_add_ids = eligible_roles - user_role_ids
+        roles_to_remove_ids = (user_role_ids & all_rank_roles) - eligible_roles
 
-        ranked_up = False
+        # Detect rank-up (only if gaining current rank role)
+        ranked_up = (
+            current_rank["role_id"] is not None
+            and current_rank["role_id"] not in user_role_ids
+        )
 
-        # Detect rank-up specifically (missing current rank role)
-        if current_rank["role_id"] and current_rank["role_id"] not in user_role_ids:
-            ranked_up = True
-
-        # Add all missing roles silently
+        # Resolve role objects
         roles_to_add = [
             interaction.guild.get_role(rid)
-            for rid in missing_roles
-            if interaction.guild.get_role(rid) is not None
+            for rid in roles_to_add_ids
+            if interaction.guild.get_role(rid)
         ]
 
+        roles_to_remove = [
+            interaction.guild.get_role(rid)
+            for rid in roles_to_remove_ids
+            if interaction.guild.get_role(rid)
+        ]
+
+        # Apply role changes
         if roles_to_add:
-            await member.add_roles(*roles_to_add, reason="Trader rank sync")
+            await member.add_roles(*roles_to_add, reason="Trader rank sync (add)")
+        if roles_to_remove:
+            await member.remove_roles(
+                *roles_to_remove, reason="Trader rank sync (remove)"
+            )
 
         # Progress text
         if next_rank:
@@ -241,7 +257,7 @@ class Points(commands.Cog):
 
         # Tier list
         tier_lines = [
-            f"<@&{rank['role_id']}> : {rank['required']} traders"
+            f"<@&{rank['role_id']}> — {rank['required']} traders"
             for rank in TRADER_RANKS
         ]
 
@@ -266,7 +282,6 @@ class Points(commands.Cog):
             inline=False,
         )
 
-        # Add congratulations message only if true rank-up occurred
         content = None
         if ranked_up and current_rank["role_id"]:
             content = member.mention
