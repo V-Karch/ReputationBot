@@ -28,7 +28,7 @@ class HistoryPaginator(discord.ui.View):
         ]
         for points, reason, author_id in page_entries:
             description_lines.append(
-                f"{points:+d} | By <@{author_id}> | Reason: {reason}"
+                f"{points:+d} | By <@{author_id}> | Review: {reason}"
             )
 
         page_embed = discord.Embed(

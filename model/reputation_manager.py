@@ -56,7 +56,7 @@ class ReputationManager(discord.ui.View):
         ]
         for entry_id, points, reason, author_id in page_entries:
             description_lines.append(
-                f"ID: {entry_id} | Points: {points:+d} | Author: <@{author_id}> | Reason: {reason}"
+                f"ID: {entry_id} | Points: {points:+d} | Author: <@{author_id}> | Review: {reason}"
             )
 
         embed = discord.Embed(
