@@ -44,7 +44,7 @@ class Points(commands.Cog):
     @app_commands.describe(
         user="The user you want to modify the reputation for",
         experience="The type of experience you had (positive or negative)",
-        reason="The reason you are giving this person reputation",
+        review="Give some feedback!",
     )
     @app_commands.checks.cooldown(
         1, 300, key=lambda interaction: (interaction.guild_id, interaction.user.id)
@@ -54,7 +54,7 @@ class Points(commands.Cog):
         interaction: discord.Interaction,
         user: discord.Member,
         experience: ExperienceType,
-        reason: str,
+        review: str,
     ):
         await interaction.response.defer()
 
@@ -62,7 +62,7 @@ class Points(commands.Cog):
             await interaction.followup.send("You can't give reputation to yourself!")
             return
 
-        DB.add_entry_to_points_db(user.id, interaction.user.id, experience, reason)
+        DB.add_entry_to_points_db(user.id, interaction.user.id, experience, review)
 
         color = (
             discord.Color.green()
@@ -76,7 +76,7 @@ class Points(commands.Cog):
             description=f"{interaction.user.mention} gave {emoji} reputation to {user.mention}",
             color=color,
         )
-        response_embed.add_field(name="Reason", value=reason, inline=False)
+        response_embed.add_field(name="Review", value=review, inline=False)
         await interaction.followup.send(embed=response_embed)
 
     @reputation.error
