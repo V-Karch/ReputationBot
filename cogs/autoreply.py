@@ -87,6 +87,28 @@ Pokemon Let's Go: <#1070473752695021598>"""
 
         await context.reply(embed=make_rule_embed(rule_number))
 
+    @commands.command(name="guidelines", aliases=["gl"])
+    async def guidelines(self, context: commands.Context):
+
+        if context.author.id != 923600698967461898:
+            await context.reply("Nope!")
+            return  # Get out early if not me
+
+        with open("model/trade_guidelines.txt", "r") as f:
+            first_half_data = [map(str.strip, f.readlines())]
+
+        with open("model/trade_guidelines_special.txt", "r") as f:
+            second_half_data = [map(str.strip, f.readlines())]
+
+        first_half_embed = discord.Embed(
+            discord.Color.red, title="Trade Guidelines", description=first_half_data
+        )
+        second_half_embed = discord.Embed(
+            discord.Color.red, title="Special Cases", description=second_half_data
+        )
+
+        await context.channel.send(embeds=[first_half_embed, second_half_embed])
+
 
 async def setup(client: commands.Bot):
     await client.add_cog(Autoreply(client))

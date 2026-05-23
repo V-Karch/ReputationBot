@@ -1,0 +1,25 @@
+**Non-shiny, non-legendary**: No real value. For version specific Pokémon, trading the opposing Pokémon for it is usually fine.
+
+## Non-legendary
+**SV/PLA/PLZA/PoGo *origin* Shiny**(base shiny): 1:1 *this is the base value I will be using*
+- Shinies from non overworld shiny games: 1:2 base shiny
+- Ditto/Zorua: 1:2 base shiny 
+-# You have to auto battle to check if these Pokémon are shiny, so they are worth more 
+- Masuda: 1:5
+-# Time consuming, but be careful for genned eggs
+- Shiny Fossils: 1:5
+-# SwSh fossils are worth more, but since PLZA can be reset and revived with a turbo 'A' input, it doesn't have a crazy value.
+- 3 segment Dudunsparce/family of 3 Maushold: 1:(20-40) 
+-# This is a very difficult hunt with 1-100 odds on evolution after catching each shiny, AND Tandemaus is difficult to tell the shiny apart on its own. It depends more on how much the person with the Pokémon is willing to let it go for, but be prepared to trade a lot for it.
+- PoGo Stamped: 1:3
+-# Some specific Pokémon that are limited time/region specific/custom OT can be much more, but this is for normal ones.
+
+## Legendaries
+- Common legendary (soft resets/Dynamax adventure/PoGo *origin*): 1:5
+-# People with Dynamax adventures legends caught with video proof probably will want more
+- Harder to get Legendaries: 1:15
+-# First one to come to mind is zygarde because it's a pain to KO it, and you need to check its shiny.
+- Event Legends: 1:(5-50+)
+-# Really depends on rarity of event, proof of legitimacy, and popularity of the Pokémon, it's hard to put a set value on this, and really hard to verify legitimacy.
+- PoGo Stamped: 1:10+
+-# Value can be altered based on custom OT, last time the legend was in raids, and especially non-premier ball legends.
