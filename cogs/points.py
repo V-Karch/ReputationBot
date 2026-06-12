@@ -190,9 +190,7 @@ class Points(commands.Cog):
         user: discord.Member | None = None,
     ):
         await interaction.response.defer()
-
         member = user or interaction.user
-        member = interaction.guild.get_member(member.id)
 
         unique_users = DB.get_unique_traders_count(member.id)
 
