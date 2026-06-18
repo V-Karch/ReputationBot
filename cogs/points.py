@@ -77,7 +77,7 @@ class Points(commands.Cog):
             color=color,
         )
         response_embed.add_field(name="Review", value=review, inline=False)
-        await interaction.followup.send(embed=response_embed)
+        await interaction.followup.send(user.mention, embed=response_embed)
 
     @reputation.error
     async def reputation_error(
