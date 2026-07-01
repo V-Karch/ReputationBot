@@ -8,9 +8,8 @@ with open("token.txt", "r") as f:
     TOKEN = f.read().strip()
 
 intents = discord.Intents.default()
-intents.message_content = True
 
-client = commands.Bot(command_prefix="!", intents=intents)
+client = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
 @client.command(name="sync")
