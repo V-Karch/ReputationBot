@@ -57,8 +57,8 @@ class Autoreply(commands.Cog):
     ):
         info_text = """Click below and please repost your request in one of the following locations:
 
-Trade Hub 1: <#1341162683734425631>
-Trade Hub 2: <#1341162764701536398>
+Scarlet / Violet: <#1341162683734425631>
+Trading Board: <#1480908062255743017>
 Shiny Trade: <#1047110840735768636>
 
 Alternatively, For different games, we have the following:
